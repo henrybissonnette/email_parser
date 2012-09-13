@@ -4,11 +4,14 @@ require "./regex.rb"
 describe 'RegexBuilder' do
 	before(:all) do 
 		the_hash = {
-			comment: /(\([^\(\)]*\))?/,
-			post_chars: /[a-zA-Z0-9-]/,
-			pre_chars: /[\w!#\$%&'*+\-\/=?^_`{|}~]/,
-			string: /"(?:[^\"\\]|\\")*"/,
+			comment: '(\([^\(\)]*\))?',
+			post_chars: '[a-zA-Z0-9-]',
+			pre_chars: '[\d!#\$%&\'*+\-\/\=\?\^_`\{\|\}~]',
+			string: "\"(?:[^\\\"]|\\\")*\"",
 		}
+		constructions = [
+			[:domain,[:comment,:post_chars,:post_chars,:comment],[nil,nil,'*(\.','+)+',nil]]
+		]
 		@builder =  RegexBuilder.new(the_hash)
 	end
 	describe 'expressions' do
@@ -20,7 +23,7 @@ describe 'RegexBuilder' do
 					'hiug&^*$#{\&GIU89yiug9\*\\}(jhgkjshd&#{@)})dgfskj./,?><',
 				] 
 				test_strings.each do |test_string|
-					test_string.should match(@builder.expressions[:comment])
+					test_string.should match(@builder.get_expression(:comment))
 				end
 			end
 
@@ -37,7 +40,7 @@ describe 'RegexBuilder' do
 					')(!*&^[]":;<>AND-one-more-FOR-good-measure',13
 				]
 				test_strings_results.each_slice(2) do |test_string,expected|
-					result = test_string =~ @builder.expressions[:post_chars] 
+					result = test_string =~ @builder.get_expression(:post_chars) 
 					result.should eq(expected)
 				end
 			end
@@ -47,10 +50,10 @@ describe 'RegexBuilder' do
 			it 'matches strings with anything but "(),:;<>@[\] in them' do
 				test_strings_results = [
 					'(),:;<>@[\] &^should_be-found_at-&',12,
-					'(),:;<>@[\] (),:;<>@[\]here%%Iam',23
+					'(),:;<>@[\] (),:;<>@[\]here%%Iam',27
 				]
 				test_strings_results.each_slice(2) do |test_string,expected|
-					result = test_string =~ @builder.expressions[:pre_chars] 
+					result = test_string =~ @builder.get_expression(:pre_chars) 
 					result.should eq(expected)
 				end
 			end
@@ -63,9 +66,11 @@ describe 'RegexBuilder' do
 					'01234"hello"additional stuff',[5,7],
 				]
 				test_strings_results.each_slice(2) do |test_string,expected|
+					puts 'test_string is: '+test_string
+					puts 'expression is: ' + @builder.get_expression(:string).to_s
 					result = [
-						test_string =~ @builder.expressions[:string],
-						test_string.scan(@builder.expressions[:string])[0].length
+						test_string =~ @builder.get_expression(:string),
+						test_string.scan(@builder.get_expression(:string))[0].length
 					]
 					result.should eq(expected)
 				end
@@ -73,25 +78,45 @@ describe 'RegexBuilder' do
 		end
 	end
 	describe 'construct_expression' do
-		it 'should create a single regex from two which matches the patterns serially' do
+		before(:all) do 
 			@builder.new_expression(:hello,/hello/)
 			@builder.new_expression(:world,/ world/)
+		end
+
+		it 'should create a single regex from two which matches the patterns serially' do			
 			@builder.construct_expression(:hello_world,[:hello,:world])
-			'hello world'.should match(@builder.expressions[:hello_world]) 
+			'hello world'.should match(@builder.get_expression(:hello_world)) 
 		end
 
 		it 'should fail to match expressions which its concatenated constituents would not' do
-			@builder.new_expression(:hello,/hello/)
-			@builder.new_expression(:world,/ world/)
 			@builder.construct_expression(:hello_world,[:hello,:world])
-			'hello  world'.should_not match(@builder.expressions[:hello_world])
+			'hello  world'.should_not match(@builder.get_expression(:hello_world))
 		end
 
 		it 'should be able to insert additional regex in between existing expressions' do
-			@builder.new_expression(:hello,/hello/)
-			@builder.new_expression(:world,/ world/)
 			@builder.construct_expression(:hello_world,[:hello,:world],[/ there/,/!/])
-			'hello there world!'.should match(@builder.expressions[:hello_world]) 
+			'hello there world!'.should match(@builder.get_expression(:hello_world)) 
+		end
+
+		after(:all) do
+			@builder.delete_expression(:hello)
+			@builder.delete_expression(:world)
+			@builder.delete_expression(:hello_world)
+		end
+	end
+
+	describe 'construct_many' do
+		it 'should build multiple working compound expressions in one call' do
+			@builder.new_expression(:hello,'hello')
+			@builder.new_expression(:otherstuff,'.*')
+			@builder.new_expression(:world,' world')
+			test_constructors = [
+				[:hello_world1,[:hello,:world]],
+				[:hello_world2,[:hello,:world,:otherstuff],['a','b','c']]
+			]
+			@builder.construct_many(test_constructors)
+			'hello world'.should match(@builder.get_expression(:hello_world1))
+			'helloa worldb sajkdfhfjdkshc'.should match(@builder.get_expression(:hello_world2))
 		end
 	end
 end
