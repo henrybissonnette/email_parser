@@ -119,5 +119,12 @@ describe 'RegexBuilder' do
 			'helloa worldb sajkdfhfjdkshc'.should match(@builder.get_expression(:hello_world2))
 		end
 	end
+
+	describe 'prepend' do
+		it 'should add new conditions to the beginning of a regex' do
+			@builder.prepend_to_expression(:hello,'why ')
+			'why hello'.should match(@builder.get_expression(:hello))
+		end
+	end
 end
 

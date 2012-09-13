@@ -41,6 +41,10 @@ class RegexBuilder
 		end
 	end
 
+	def prepend_to_expression(name_symbol,regex_string)
+		@expressions[name_symbol].prepend(regex_string) 
+	end
+
 	def get_expression(name_symbol)
 		Regexp.new(@expressions[name_symbol])
 	end
