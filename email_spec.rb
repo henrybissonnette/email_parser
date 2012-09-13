@@ -79,6 +79,20 @@ describe 'RegexBuilder' do
 			@builder.construct_expression(:hello_world,[:hello,:world])
 			'hello world'.should match(@builder.expressions[:hello_world]) 
 		end
+
+		it 'should fail to match expressions which its concatenated constituents would not' do
+			@builder.new_expression(:hello,/hello/)
+			@builder.new_expression(:world,/ world/)
+			@builder.construct_expression(:hello_world,[:hello,:world])
+			'hello  world'.should_not match(@builder.expressions[:hello_world])
+		end
+
+		it 'should be able to insert additional regex in between existing expressions' do
+			@builder.new_expression(:hello,/hello/)
+			@builder.new_expression(:world,/ world/)
+			@builder.construct_expression(:hello_world,[:hello,:world],[/ there/,/!/])
+			'hello there world!'.should match(@builder.expressions[:hello_world]) 
+		end
 	end
 end
 

@@ -14,10 +14,14 @@ the_hash = {
 	match_string: /"(?:[^\"\\]|\\")*"/
 }
 
+constructions = {
+
+}
+
 class RegexBuilder
 	attr_accessor :expressions
 
-	def initialize(regex_hash)
+	def initialize(regex_hash={})
 		@expressions = regex_hash
 	end
 
@@ -25,11 +29,25 @@ class RegexBuilder
 		@expressions[name_symbol] = regex
 	end
 
-	def construct_expression(name_symbol, symbol_list)
-		exp = //
-		symbol_list.each do |symbol|
-			exp =/#{exp}#{@expressions[symbol]}/
+	def delete_expression(name_symbol)
+		@expressions.delete(name_symbol)
+	end
+
+	def construct_expression(name_symbol, symbol_list, inserts = nil)
+		# symbol_list and inserts should be equal length
+		# the nth insert will be added to the regex immediately after 
+		# the expression referred to by the nth symbol
+
+		inserts  = [//]*symbol_list.length if !inserts 
+		if not inserts.length == symbol_list.length
+			raise ArgumentError, "symbol_list and inserts must be of equal length"
 		end
+
+		exp = //
+		symbol_list.zip(inserts).each do |symbol,insert|
+			exp =/#{exp}#{@expressions[symbol]}#{insert}/
+		end
+		puts exp
 		new_expression(name_symbol,exp)
 	end
 
