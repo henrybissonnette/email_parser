@@ -53,7 +53,7 @@ class RegexBuilder
 		@expressions.delete(name_symbol)
 	end
 
-	def construct_expression(name_symbol, symbol_list, inserts = nil)
+	def construct_expression(name_symbol, symbol_list, inserts = nil, prepend = nil)
 		# symbol_list and inserts should be equal length
 		# the nth insert will be added to the regex immediately after 
 		# the expression referred to by the nth symbol
@@ -66,7 +66,7 @@ class RegexBuilder
 			raise ArgumentError, "symbol_list and inserts must be of equal length"
 		end
 
-		exp = ''
+		exp = prepend ? prepend : '' 
 		symbol_list.zip(inserts).each do |symbol,insert|
 			exp ="#{exp}#{@expressions[symbol]}#{insert}"
 		end

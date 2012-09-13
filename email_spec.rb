@@ -10,9 +10,10 @@ describe 'RegexBuilder' do
 			string: "\"(?:[^\\\"]|\\\")*\"",
 		}
 		constructions = [
-			[:domain,[:comment,:post_chars,:post_chars,:comment],[nil,nil,'*(\.','+)+',nil]]
+			[:domain,[:comment,:post_chars,:post_chars,:comment],[nil,nil,'*(\.','+)+',nil]],
 		]
 		@builder =  RegexBuilder.new(the_hash)
+		@builder.construct_many(constructions)
 	end
 	describe 'expressions' do
 		describe 'optional comment expression' do
@@ -112,11 +113,11 @@ describe 'RegexBuilder' do
 			@builder.new_expression(:world,' world')
 			test_constructors = [
 				[:hello_world1,[:hello,:world]],
-				[:hello_world2,[:hello,:world,:otherstuff],['a','b','c']]
+				[:hello_world2,[:hello,:world,:otherstuff],['a','b','c'],'why ']
 			]
 			@builder.construct_many(test_constructors)
 			'hello world'.should match(@builder.get_expression(:hello_world1))
-			'helloa worldb sajkdfhfjdkshc'.should match(@builder.get_expression(:hello_world2))
+			'why helloa worldb sajkdfhfjdkshc'.should match(@builder.get_expression(:hello_world2))
 		end
 	end
 
@@ -126,5 +127,7 @@ describe 'RegexBuilder' do
 			'why hello'.should match(@builder.get_expression(:hello))
 		end
 	end
+
+
 end
 
