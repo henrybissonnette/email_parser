@@ -4,13 +4,13 @@ require "./regex.rb"
 describe 'RegexBuilder' do
 	before(:all) do 
 		the_hash = {
-			comment: '(\([^\(\)]*\))?',
+			comment: '(?:\([^\(\)]*\))?',
 			post_chars: '[a-zA-Z0-9-]',
 			pre_chars: '[\d!#\$%&\'*+\-\/\=\?\^_`\{\|\}~]',
 			string: "\"(?:[^\\\"]|\\\")*\"",
 		}
 		constructions = [
-			[:domain,:comment,:post_chars,'+(\.',:post_chars,'+)+',:comment],
+			[:domain,:comment,:post_chars,'+(?:\.',:post_chars,'+)*',:comment],
 		]
 		@builder =  RegexBuilder.new(the_hash)
 		@builder.construct_many(constructions)
@@ -76,27 +76,27 @@ describe 'RegexBuilder' do
 			end
 		end
 
-		# describe 'domain expression' do
-		# 	it 'should match all possible domain strings' do
-		# 		# with the exception of literal IPs
-		# 		test_domains = [
-		# 			'!@@@!!!..(the domain begins here @)internets.com &&&',[9,39],
-		# 			'com',[0,3],
-		# 			'[][][][][mydomain.net(comments also allowed here)',[9,40],
-		# 			'0-----.-----0',[0,13],
-		# 			'!!!this.that.the-other.asia',[3,24],
-		# 		]
-		# 		test_domains.each_slice(2) do |domain,expected|
-		# 			results = [
-		# 				domain =~ @builder.get_expression(:domain),
-		# 				domain.scan(@builder.get_expression(:domain))[0].length
-		# 			]
-		# 			puts 'the expression is: '+@builder.get_expression(:domain).to_s
-		# 			puts 'scan yields: '+domain.scan(@builder.get_expression(:domain)).to_s
-		# 			results.should eq(expected)
-		# 		end
-		# 	end
-		# end
+		describe 'domain expression' do
+			it 'should match all possible domain strings' do
+				# with the exception of literal IPs
+				test_domains = [
+					'!@@@!!!..(the domain begins here @)internets.com &&&',[9,39],
+					'com',[0,3],
+					'[][][][][mydomain.net(comments also allowed here)',[9,40],
+					'0-----.-----0',[0,13],
+					'!!!this.that.the-other.asia',[3,24],
+				]
+				test_domains.each_slice(2) do |domain,expected|
+					results = [
+						domain =~ @builder.get_expression(:domain),
+						domain.scan(@builder.get_expression(:domain))[0].length
+					]
+					puts 'the expression is: '+@builder.get_expression(:domain).to_s
+					puts 'scan yields: '+domain.scan(@builder.get_expression(:domain)).to_s
+					results.should eq(expected)
+				end
+			end
+		end
 	end
 	describe 'construct_expression' do
 		before(:all) do 
@@ -140,14 +140,6 @@ describe 'RegexBuilder' do
 			'why helloa worldb sajkdfhfjdkshc'.should match(@builder.get_expression(:hello_world2))
 		end
 	end
-
-	# describe 'prepend' do
-	# 	it 'should add new conditions to the beginning of a regex' do
-	# 		@builder.prepend_to_expression(:hello,'why ')
-	# 		'why hello'.should match(@builder.get_expression(:hello))
-	# 	end
-	# end
-
 
 end
 
