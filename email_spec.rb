@@ -10,7 +10,7 @@ describe 'RegexBuilder' do
 			string: "\"(?:[^\\\"]|\\\")*\"",
 		}
 		constructions = [
-			[:domain,[:comment,:post_chars,:post_chars,:comment],[nil,nil,'*(\.','+)+',nil]],
+			[:domain,:comment,:post_chars,'+(\.',:post_chars,'+)+',:comment],
 		]
 		@builder =  RegexBuilder.new(the_hash)
 		@builder.construct_many(constructions)
@@ -67,8 +67,6 @@ describe 'RegexBuilder' do
 					'01234"hello"additional stuff',[5,7],
 				]
 				test_strings_results.each_slice(2) do |test_string,expected|
-					puts 'test_string is: '+test_string
-					puts 'expression is: ' + @builder.get_expression(:string).to_s
 					result = [
 						test_string =~ @builder.get_expression(:string),
 						test_string.scan(@builder.get_expression(:string))[0].length
@@ -77,25 +75,47 @@ describe 'RegexBuilder' do
 				end
 			end
 		end
+
+		# describe 'domain expression' do
+		# 	it 'should match all possible domain strings' do
+		# 		# with the exception of literal IPs
+		# 		test_domains = [
+		# 			'!@@@!!!..(the domain begins here @)internets.com &&&',[9,39],
+		# 			'com',[0,3],
+		# 			'[][][][][mydomain.net(comments also allowed here)',[9,40],
+		# 			'0-----.-----0',[0,13],
+		# 			'!!!this.that.the-other.asia',[3,24],
+		# 		]
+		# 		test_domains.each_slice(2) do |domain,expected|
+		# 			results = [
+		# 				domain =~ @builder.get_expression(:domain),
+		# 				domain.scan(@builder.get_expression(:domain))[0].length
+		# 			]
+		# 			puts 'the expression is: '+@builder.get_expression(:domain).to_s
+		# 			puts 'scan yields: '+domain.scan(@builder.get_expression(:domain)).to_s
+		# 			results.should eq(expected)
+		# 		end
+		# 	end
+		# end
 	end
 	describe 'construct_expression' do
 		before(:all) do 
-			@builder.new_expression(:hello,/hello/)
-			@builder.new_expression(:world,/ world/)
+			@builder.construct_expression(:hello,'hello')
+			@builder.construct_expression(:world,' world')
 		end
 
 		it 'should create a single regex from two which matches the patterns serially' do			
-			@builder.construct_expression(:hello_world,[:hello,:world])
+			@builder.construct_expression(:hello_world,*[:hello,:world])
 			'hello world'.should match(@builder.get_expression(:hello_world)) 
 		end
 
 		it 'should fail to match expressions which its concatenated constituents would not' do
-			@builder.construct_expression(:hello_world,[:hello,:world])
+			@builder.construct_expression(:hello_world,*[:hello,:world])
 			'hello  world'.should_not match(@builder.get_expression(:hello_world))
 		end
 
 		it 'should be able to insert additional regex in between existing expressions' do
-			@builder.construct_expression(:hello_world,[:hello,:world],[/ there/,/!/])
+			@builder.construct_expression(:hello_world,*[:hello,' there',:world,'!'])
 			'hello there world!'.should match(@builder.get_expression(:hello_world)) 
 		end
 
@@ -108,12 +128,12 @@ describe 'RegexBuilder' do
 
 	describe 'construct_many' do
 		it 'should build multiple working compound expressions in one call' do
-			@builder.new_expression(:hello,'hello')
-			@builder.new_expression(:otherstuff,'.*')
-			@builder.new_expression(:world,' world')
+			@builder.construct_expression(:hello,'hello')
+			@builder.construct_expression(:otherstuff,'.*')
+			@builder.construct_expression(:world,' world')
 			test_constructors = [
-				[:hello_world1,[:hello,:world]],
-				[:hello_world2,[:hello,:world,:otherstuff],['a','b','c'],'why ']
+				[:hello_world1,:hello,:world],
+				[:hello_world2,'why ',:hello,'a',:world,'b',:otherstuff,'c'],
 			]
 			@builder.construct_many(test_constructors)
 			'hello world'.should match(@builder.get_expression(:hello_world1))
@@ -121,12 +141,12 @@ describe 'RegexBuilder' do
 		end
 	end
 
-	describe 'prepend' do
-		it 'should add new conditions to the beginning of a regex' do
-			@builder.prepend_to_expression(:hello,'why ')
-			'why hello'.should match(@builder.get_expression(:hello))
-		end
-	end
+	# describe 'prepend' do
+	# 	it 'should add new conditions to the beginning of a regex' do
+	# 		@builder.prepend_to_expression(:hello,'why ')
+	# 		'why hello'.should match(@builder.get_expression(:hello))
+	# 	end
+	# end
 
 
 end
