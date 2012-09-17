@@ -21,7 +21,7 @@ the_hash = {
 	}
 
 constructions = [
-	[:domain,[:comment,:post_chars,:post_chars,:comment],[nil,'*(\.','+)+',nil]],
+	[:domain,:comment,:post_chars,'+(\.',:post_chars,'+)+',:comment],
 ]
 
 class RegexBuilder
@@ -31,7 +31,7 @@ class RegexBuilder
 	end
 
 	def get_expression(name_symbol)
-		Regexp.new(@expressions[name_symbol])
+		Regexp.new(@expressions[name_symbol],'g')
 	end
 
 	def delete_expression(name_symbol)

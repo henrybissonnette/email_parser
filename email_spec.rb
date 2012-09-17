@@ -1,5 +1,29 @@
 require "./regex.rb"
 
+describe "parsing emails out of a string" do
+  before(:all) do 
+    the_hash = {
+      comment: '(?:\([^\(\)]*\))?',
+      post_chars: '[a-zA-Z0-9-]',
+      pre_chars: '[\w!#\$%&\'*+\-\/\=\?\^_`\{\|\}~]',
+      string: "\"(?:[^\\\"]|\\\")*\"",
+    }
+    constructions = [
+      [:domain,:comment,:post_chars,'+(?:\.',:post_chars,'+)*',:comment],
+    ]
+    @builder =  RegexBuilder.new(the_hash)
+    @builder.construct_many(constructions)
+  end
+
+  context "with normal email addresses" do
+    it "extracts email from 'henryb@groupon.com'" do
+      @builder.construct_expression(:email,:pre_chars,'+@',:domain)
+      regex = @builder.get_expression(:email)
+      puts regex.to_s
+      'henryb@groupon.com'.match(regex)[0].should eq('henryb@groupon.com')
+    end
+  end
+end
 
 describe 'RegexBuilder' do
 	before(:all) do 
@@ -91,8 +115,6 @@ describe 'RegexBuilder' do
 						domain =~ @builder.get_expression(:domain),
 						domain.scan(@builder.get_expression(:domain))[0].length
 					]
-					puts 'the expression is: '+@builder.get_expression(:domain).to_s
-					puts 'scan yields: '+domain.scan(@builder.get_expression(:domain)).to_s
 					results.should eq(expected)
 				end
 			end
